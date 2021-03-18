@@ -1,0 +1,91 @@
+a <- read.table("file:///C:/Users/bespalov/Images (LOCAL)/SOX2-tdTomato reporter/NSC ORGANOIDS SOX2-tdT/Calcium imaging/H9 ORG 2018-2019/8weeks/Friday with TTX/8weeksOrg1_Place1_4min.csv", skip=2, sep=",", comment.char = "")
+
+dat0 <- read.table("file:///C:/Users/bespalov/Images (LOCAL)/SOX2-tdTomato reporter/NSC ORGANOIDS SOX2-tdT/Calcium imaging/H9 ORG 2018-2019/8weeks/Friday with TTX/tmp_withoutheader_8weeksOrg1_Place1_4min.csv",sep=",")
+
+
+# first column is time
+dat1 <- dat0[,-1] # other columns are cells
+means <- apply(dat1,2,mean,na.r=T) # get the mean values per cell for intensity
+
+# subtract mean intesity for each cell --> to get values around zero
+dat2 <- matrix(NA, ncol=dim(dat1)[2], nrow=dim(dat1)[1])
+for(i in 1:dim(dat1)[2]){
+  dat2[,i] <- dat1[,i]-means[i]
+}
+
+plot(as.data.frame(dat2))
+summary(lm(dat2[,3]~dat2[,4])) # corratation between cells 3 and 4
+global.ave <- apply(dat2,1,mean) # global average of intensity 
+
+summary(lm(rep(global.ave,dim(dat2)[2])~stack(as.data.frame(dat2))[,1])) # correlation agains global aveage for all cells
+
+dat2[dat2<0] <- NA
+heatmap(cor(dat2, use = "pairwise.complete.obs"), col = col2, symm = TRUE)
+cor(dat2, use = "pairwise.complete.obs")
+
+cor(dat2) #numerical values of overall correlation co-efficients
+plot(cor(dat2)) # plots coeff from column1 to column2?
+
+col<- colorRampPalette(c("blue", "white", "red"))(20) #define heatmap colors
+col2<- colorRampPalette(c(low="blue", medium="pink", high="red"))(20)#define heatmap colors with PINK
+heatmap(cor(dat2), col = col2, symm = TRUE) #heatmap from correlation matrix
+
+plot(apply(dat2,1,sum),type="b") #builds graph of summed coefficients
+abline(h=0)
+
+
+pairs <- data.frame(t(combn(1:dim(dat2)[2],2)))
+pairs$coefficients <- NA
+pairs$p.value <- NA
+
+for(i in 1:dim(pairs)[1]){
+  lm1 <- lm(dat2[,pairs[i,1]]~dat2[,pairs[i,2]])
+  pairs$coefficients[i] <- lm1$coefficients[2]
+  pairs$p.value[i] <- summary(lm1)$coefficients[2,4]
+}
+pairs$FDR <- p.adjust(pairs$p.value, method = "fdr")
+  colnames(pairs)[1:2] <- c("cell.x","cell.y")
+pairs
+length(pairs[pairs$FDR<0.01&pairs$coefficients>0.25, 1])
+
+write.table(pairs, file="paired_results.txt", sep="\t",row.names = F, quote = F)
+write.table(pairs, file="clipboard", sep="\t",row.names = F, quote = F)
+
+
+
+#install.packages("openxlsx")
+#library("openxlsx")
+
+write
+
+
+#########
+dat2 <- read.table("C://Users/bespalov/Images (LOCAL)/SOX2-tdTomato reporter/NSC ORGANOIDS SOX2-tdT/Calcium imaging/H9 ORG 2018-2019/9weeks/noheader_9weeks_8lines_20min_ROI6-CTRL.csv",sep=",",quote="")
+par(mfrow=c(1,2))
+plot(dat2[,1], dat2[,2])
+
+## subtract the ith value from the preceding value 
+# too distructive, removes also the time trend from the actual peaks
+#tmp <- c()
+#for(i in 1:dim(dat2)[1]){
+#  tmp <- c(tmp, dat2[i,4] - dat2[i-1,4])
+#}
+#plot(dat2[-1,1], tmp)
+plot(dat2[-1,1], dat2[-1,4])
+
+
+### use this instead
+install.packages("pracma")
+library("pracma")
+
+dat3 <- c()
+for(i in 1:dim(dat2)[2]){
+  tmp <- detrend(dat2[,i], tt = 'linear', bp = c()) # fits a "moving" linear regression to the data and subracts the "time" component from the total intensities
+  dat3 <- cbind(dat3,tmp)
+}
+dat3 <- as.data.frame(dat3)
+colnames(dat3) <- c("time",paste0("sample_",1:(dim(dat2)[2]-1)))
+dat3[,1] <- dat2[,1]
+plot(dat3)
+plot(dat2)
+#plot(dat2[-1,1], tmp)
