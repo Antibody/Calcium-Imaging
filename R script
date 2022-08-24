@@ -1,6 +1,6 @@
-a <- read.table("file:///C:/Users/bespalov/Images (LOCAL)/SOX2-tdTomato reporter/NSC ORGANOIDS SOX2-tdT/Calcium imaging/H9 ORG 2018-2019/8weeks/Friday with TTX/8weeksOrg1_Place1_4min.csv", skip=2, sep=",", comment.char = "")
+# a <- read.table("file:///C:/FILEPATH/file.csv", skip=2, sep=",", comment.char = "") #
 
-dat0 <- read.table("file:///C:/Users/bespalov/Images (LOCAL)/SOX2-tdTomato reporter/NSC ORGANOIDS SOX2-tdT/Calcium imaging/H9 ORG 2018-2019/8weeks/Friday with TTX/tmp_withoutheader_8weeksOrg1_Place1_4min.csv",sep=",")
+dat0 <- read.table("file:///C:/FILEPATH/file.csv",sep=",")
 
 
 # first column is time
